@@ -1,0 +1,39 @@
+export const DEFAULT_LANG = 'en_US'
+
+const dict = {
+  'Starting Shelfarr!': 0,
+  'Web Interface': 1,
+  'The web interface is ready': 2,
+  'The web interface is not ready': 3,
+  'Set the admin password before signing in': 4,
+  'Output folders must be inside selected storage, not its root.': 5,
+  'Selected storage is not installed. Install it or change Media Storage.': 6,
+  'Choose where Shelfarr stores your books': 7,
+  'Web UI': 8,
+  'The Shelfarr web interface and API': 9,
+  'Disconnect qBittorrent': 10,
+  'Connect qBittorrent': 11,
+  'Toggle the managed qBittorrent download client. Downloads must use selected shared storage. Changing the connection restarts Shelfarr.': 12,
+  'Disconnect Prowlarr': 13,
+  'Connect Prowlarr': 14,
+  'Toggle automatic connection to Prowlarr on this server. Shelfarr searches Prowlarr directly. Changing the connection restarts Shelfarr.': 15,
+  'Media Storage': 16,
+  'Choose shared storage and output folders. Changing storage restarts Shelfarr but does not move files.': 17,
+  Storage: 18,
+  'FileBrowser Quantum: /mnt/filebrowser. NextExplorer: /mnt/nextexplorer, with one folder per location.': 19,
+  'Audiobook Folder': 20,
+  'Ebook Folder': 21,
+  'Comic Folder': 22,
+  'Reset Admin Password': 23,
+  'Set Admin Password': 24,
+  'Generate a new password for the admin account. Applies on startup.': 25,
+  'Replaces the admin password and restarts Shelfarr. Existing admin sessions are revoked.': 26,
+  'Login Credentials': 27,
+  'Sign in after Shelfarr finishes starting. Keep any configured two-factor authenticator.': 28,
+  Username: 29,
+  Password: 30,
+} as const
+
+export type I18nKey = keyof typeof dict
+export type LangDict = Record<(typeof dict)[I18nKey], string>
+export default dict
