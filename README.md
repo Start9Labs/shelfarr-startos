@@ -43,8 +43,8 @@ Application state and package state use separate volumes. Output libraries and c
 | `startos`                  | Unmounted                       | `store.json` containing credentials and selections                                      |
 | FileBrowser Quantum `data` | `/mnt/filebrowser`, read-write  | Shared libraries and downloads                                                          |
 | NextExplorer `data`        | `/mnt/nextexplorer`, read-write | Shared libraries and downloads, one directory per location                              |
-| qBittorrent `main/share`   | `/mnt/qbittorrent`, read-only   | Shared API key, while connected and installed                                           |
-| Prowlarr `public`   | `/mnt/prowlarr`, read-only      | Shared API key, while connected and installed                                           |
+| qBittorrent `public`       | `/mnt/qbittorrent`, read-only   | Shared API key, while connected and installed                                           |
+| Prowlarr `public`          | `/mnt/prowlarr`, read-only      | Shared API key, while connected and installed                                           |
 
 The own storage mount masks any files baked into the image's storage directory; fresh installations generate their own keys. Media mount paths match qBittorrent. A download and output path on one mounted filesystem can support hardlinks; different file managers cannot share them.
 

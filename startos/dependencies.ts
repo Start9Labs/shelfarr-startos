@@ -42,7 +42,7 @@ export const dependencies = sdk.Dependencies.of()
         title: 'qBittorrent',
         icon: 'https://raw.githubusercontent.com/Start9Labs/qbittorrent-startos/a1d5e8fde103a8014f9c3bf0055f999bdff01f92/icon.svg',
       },
-      versionRange: '>=5.3.0:1',
+      versionRange: '>=5.3.0:5',
       kind: 'running',
       healthChecks: ['primary'],
       enabled: async ({ effects }) =>
