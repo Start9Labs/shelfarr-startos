@@ -18,6 +18,7 @@ import { sdk } from './sdk'
 import {
   bootstrapScript,
   mediaMountpoints,
+  prepareMediaScript,
   uiPort,
   validMediaPaths,
 } from './utils'
@@ -27,13 +28,12 @@ export const main = sdk.setupMain(async ({ effects }) => {
   const store = await storeJson.read().const(effects)
   if (!store?.adminPassword)
     throw new Error(i18n('Set the admin password before signing in'))
-  if (
-    !validMediaPaths(store.mediaSources, [
-      store.audiobookPath,
-      store.ebookPath,
-      store.comicbookPath,
-    ])
-  )
+  const outputPaths = [
+    store.audiobookPath,
+    store.ebookPath,
+    store.comicbookPath,
+  ]
+  if (!validMediaPaths(store.mediaSources, outputPaths))
     throw new Error(
       i18n('Output folders must be inside selected storage, not its root.'),
     )
@@ -108,8 +108,8 @@ export const main = sdk.setupMain(async ({ effects }) => {
   if (prowlarrAddress)
     mounts = mounts.mountDependency<typeof prowlarrManifest>({
       dependencyId: 'prowlarr',
-      volumeId: 'startos',
-      subpath: 'share',
+      volumeId: 'public',
+      subpath: null,
       mountpoint: '/mnt/prowlarr',
       readonly: true,
     })
@@ -151,6 +151,19 @@ export const main = sdk.setupMain(async ({ effects }) => {
       exec: { command: ['update-ca-certificates'] },
       requires: [],
     })
+    .addOneshot('prepare-media', {
+      subcontainer: sub,
+      exec: {
+        command: [
+          'bash',
+          '-ec',
+          prepareMediaScript,
+          'prepare-media',
+          ...outputPaths,
+        ],
+      },
+      requires: [],
+    })
     .addOneshot('bootstrap', {
       subcontainer: sub,
       exec: {
@@ -178,7 +191,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
           }),
         },
       },
-      requires: ['trust-ca'],
+      requires: ['trust-ca', 'prepare-media'],
     })
     .addDaemon('primary', {
       subcontainer: sub,

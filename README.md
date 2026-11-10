@@ -30,7 +30,7 @@
 
 The unmodified upstream `ghcr.io/pedro-revez-silva/shelfarr` image supports x86_64 and aarch64. `shelfarr-sub` runs the image's entrypoint and default Thruster/Puma server command as PID 1; `SOLID_QUEUE_IN_PUMA=1` keeps the job supervisor with the web service.
 
-Before opening the listener, the `bootstrap` oneshot runs the upstream entrypoint with `rails db:prepare` and a Rails runner that reconciles the admin, output paths, and managed integrations. It does not write password hashes or encrypted database values directly. The `trust-ca` oneshot installs this StartOS server's root CA for manually configured HTTPS integrations. The entrypoint manages storage ownership using uid/gid 1000.
+Before opening the listener, the `bootstrap` oneshot runs the upstream entrypoint with `rails db:prepare` and a Rails runner that reconciles the admin, output paths, and managed integrations. It does not write password hashes or encrypted database values directly. The `trust-ca` oneshot installs this StartOS server's root CA for manually configured HTTPS integrations. The `prepare-media` oneshot creates missing output directories as uid/gid 1000 before Rails drops privileges; existing shared-directory ownership and permissions are preserved. The entrypoint manages the app's own storage ownership using uid/gid 1000.
 
 ## Volume and Data Layout
 
@@ -44,7 +44,7 @@ Application state and package state use separate volumes. Output libraries and c
 | FileBrowser Quantum `data` | `/mnt/filebrowser`, read-write  | Shared libraries and downloads                                                          |
 | NextExplorer `data`        | `/mnt/nextexplorer`, read-write | Shared libraries and downloads, one directory per location                              |
 | qBittorrent `main/share`   | `/mnt/qbittorrent`, read-only   | Shared API key, while connected and installed                                           |
-| Prowlarr `startos/share`   | `/mnt/prowlarr`, read-only      | Shared API key, while connected and installed                                           |
+| Prowlarr `public`   | `/mnt/prowlarr`, read-only      | Shared API key, while connected and installed                                           |
 
 The own storage mount masks any files baked into the image's storage directory; fresh installations generate their own keys. Media mount paths match qBittorrent. A download and output path on one mounted filesystem can support hardlinks; different file managers cannot share them.
 
@@ -54,13 +54,13 @@ The own storage mount masks any files baked into the image's storage directory; 
 
 Every start reconciles the `admin` password and role, password authentication, and output paths through upstream models. A changed password also clears lockout and revokes admin sessions; two-factor configuration is preserved. Managed output paths overwrite conflicting UI changes at the next start. Other upstream settings remain in SQLite and are not modeled or rewritten by the package.
 
-Prowlarr selection begins unset, leaving manual indexer settings alone. Connecting manages its URL, key and provider; disconnecting clears its URL/key and changes the provider to `none` if Prowlarr was active. While disconnected, these fields remain cleared on startup. The managed qBittorrent record has the reserved name `qBittorrent (StartOS)`; connection fields and enabled state are package-owned, while category and routing choices remain user-controlled. Disconnecting deletes that record, not manually named clients.
+Prowlarr selection begins unset, leaving manual indexer settings alone. Connecting manages its URL, key and provider; disconnecting clears its URL/key and changes the provider to `none` if Prowlarr was active. While disconnected, these fields remain cleared on startup. The managed qBittorrent record has the reserved name `qBittorrent (StartOS)`; client type, connection fields and enabled state are package-owned, while category and routing choices remain user-controlled. Disconnecting deletes that record, not manually named clients.
 
 ## Dependencies
 
 All dependencies are optional selections. At least one file manager must be selected; selected storage must be installed before startup, preventing output files from falling onto an unmounted container path.
 
-FileBrowser Quantum and NextExplorer are `exists` dependencies with read-write data mounts. Prowlarr and qBittorrent are `running` dependencies with `primary` health expectations and read-only key mounts. Their bridge addresses and shared keys are watched reactively. Missing downloader/indexer addresses or keys leave existing application settings untouched, and installing the dependency later re-runs startup reconciliation. Dependency declarations warn about availability rather than gating the listener themselves.
+FileBrowser Quantum and NextExplorer are `exists` dependencies with read-write data mounts. Their daemons need not have been started or remain running: missing output folders are prepared independently, without recursively changing shared data ownership. Prowlarr and qBittorrent are `running` dependencies with `primary` health expectations and read-only key mounts. Their bridge addresses and shared keys are watched reactively. Missing downloader/indexer addresses or keys leave existing application settings untouched, and installing the dependency later re-runs startup reconciliation. Dependency declarations warn about availability rather than gating the listener themselves.
 
 ## Network Access and Interfaces
 
@@ -141,5 +141,5 @@ tasks:
   - { action: set-admin-password, severity: critical }
   - { action: media-storage, severity: critical }
 health_checks: [primary]
-oneshots: [trust-ca, bootstrap]
+oneshots: [trust-ca, prepare-media, bootstrap]
 ```
