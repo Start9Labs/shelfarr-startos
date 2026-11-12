@@ -30,7 +30,7 @@
 
 The unmodified upstream `ghcr.io/pedro-revez-silva/shelfarr` image supports x86_64 and aarch64. `shelfarr-sub` runs the image's entrypoint and default Thruster/Puma server command as PID 1; `SOLID_QUEUE_IN_PUMA=1` keeps the job supervisor with the web service.
 
-Before opening the listener, the `bootstrap` oneshot runs the upstream entrypoint with `rails db:prepare` and a Rails runner that reconciles the admin, output paths, and managed integrations. It does not write password hashes or encrypted database values directly. The `trust-ca` oneshot installs this StartOS server's root CA for manually configured HTTPS integrations. The `prepare-media` oneshot creates missing output directories as uid/gid 1000 before Rails drops privileges; existing shared-directory ownership and permissions are preserved. The entrypoint manages the app's own storage ownership using uid/gid 1000.
+Before opening the listener, the `bootstrap` oneshot runs the upstream entrypoint with `rails db:prepare` and a Rails runner that reconciles the admin, output paths, and managed integrations. It does not write password hashes or encrypted database values directly. The `trust-ca` oneshot installs this StartOS server's root CA for manually configured HTTPS integrations. The `prepare-media` oneshot creates missing output and download directories as uid/gid 1000 before Rails drops privileges; existing shared-directory ownership and permissions are preserved. The entrypoint manages the app's own storage ownership using uid/gid 1000.
 
 ## Volume and Data Layout
 
@@ -45,22 +45,25 @@ Application state and package state use separate volumes. Output libraries and c
 | NextExplorer `data`        | `/mnt/nextexplorer`, read-write | Shared libraries and downloads, one directory per location                              |
 | qBittorrent `public`       | `/mnt/qbittorrent`, read-only   | Shared API key, while connected and installed                                           |
 | Prowlarr `public`          | `/mnt/prowlarr`, read-only      | Shared API key, while connected and installed                                           |
+| Audiobookshelf `public`    | `/mnt/audiobookshelf`, read-only | Automatically provisioned API key while connected and installed                        |
 
 The own storage mount masks any files baked into the image's storage directory; fresh installations generate their own keys. Media mount paths match qBittorrent. A download and output path on one mounted filesystem can support hardlinks; different file managers cannot share them.
 
 ## File Models
 
-`startos/store.json` is the only file model. Install merges schema defaults; actions update the admin password, media-source selection, three output paths, and connection selections. The entire modeled state is watched by `main`; edits restart the service.
+`startos/store.json` is the only file model. Install merges schema defaults; actions update the admin password, media-source selection, three output paths, a shared download folder, and connection selections. The entire modeled state is watched by `main`; edits restart the service.
 
 Every start reconciles the `admin` password and role, password authentication, and output paths through upstream models. A changed password also clears lockout and revokes admin sessions; two-factor configuration is preserved. Managed output paths overwrite conflicting UI changes at the next start. Other upstream settings remain in SQLite and are not modeled or rewritten by the package.
 
-Prowlarr selection begins unset, leaving manual indexer settings alone. Connecting manages its URL, key and provider; disconnecting clears its URL/key and changes the provider to `none` if Prowlarr was active. While disconnected, these fields remain cleared on startup. The managed qBittorrent record has the reserved name `qBittorrent (StartOS)`; client type, connection fields and enabled state are package-owned, while category and routing choices remain user-controlled. Disconnecting deletes that record, not manually named clients.
+Prowlarr selection begins unset, leaving manual indexer settings alone. Connecting manages its URL, key and provider; disconnecting clears its URL/key and changes the provider to `none` if Prowlarr was active. While disconnected, these fields remain cleared on startup. The managed qBittorrent record has the reserved name `qBittorrent (StartOS)`; client type, connection fields, download folder and enabled state are package-owned, while category and routing choices remain user-controlled. `Media Storage` sets the managed client’s completed-download import root; when unset, it defaults to a `downloads` sibling of the audiobook output folder. This field does not override qBittorrent’s save path on torrent submission. Matching mount paths make remote-path translation unnecessary. Existing torrents are not relocated. Disconnecting deletes that record, not manually named clients.
+
+Audiobookshelf selection begins unset, preserving manual library-platform settings. **Configure Audiobookshelf** stores audiobook, ebook and comic library IDs, resolves the local bridge address, reads the automatically provisioned `public/api-key` reactively, and selects Audiobookshelf as the active library platform. No API-token input is accepted or stored in the package’s desired-state model. The credential is cached by the upstream application in SQLite as required by its integration. Empty format IDs clear the corresponding managed setting; comics fall back to the ebook library upstream. Additional scan-library IDs remain user-controlled, but are cleared when switching from another platform to avoid reusing that platform’s IDs. Disabling clears the managed URL and token on every start, preventing reconnects without overwriting another platform’s credentials. An unavailable bridge leaves existing application settings untouched. A missing or withdrawn export from an available Audiobookshelf clears Shelfarr’s managed URL/token, preventing reuse of a cached credential; a new export restarts reconciliation automatically. No private Audiobookshelf volume is mounted or modified.
 
 ## Dependencies
 
 All dependencies are optional selections. At least one file manager must be selected; selected storage must be installed before startup, preventing output files from falling onto an unmounted container path.
 
-FileBrowser Quantum and NextExplorer are `exists` dependencies with read-write data mounts. Their daemons need not have been started or remain running: missing output folders are prepared independently, without recursively changing shared data ownership. Prowlarr and qBittorrent are `running` dependencies with `primary` health expectations and read-only key mounts. Their bridge addresses and shared keys are watched reactively. Missing downloader/indexer addresses or keys leave existing application settings untouched, and installing the dependency later re-runs startup reconciliation. Dependency declarations warn about availability rather than gating the listener themselves.
+FileBrowser Quantum and NextExplorer are `exists` dependencies with read-write data mounts. Their daemons need not have been started or remain running: missing output folders are prepared independently, without recursively changing shared data ownership. Audiobookshelf, Prowlarr and qBittorrent are `running` dependencies with `primary` health expectations and read-only key mounts. Their bridge addresses and shared keys are watched reactively. Audiobookshelf requires its automatic credential-export package and also expects the `integrations` health check. While connected, a critical task requests **Service Integrations** with `integrationsEnabled: true`. It is opt-in because upstream library scans require administrator API access; the exported account is a dedicated non-root admin, not a scan-only security boundary. Disabling the Shelfarr connection hides this task but does not revoke credentials used by other services; use Audiobookshelf’s action to revoke the shared credential globally. Missing downloader/indexer addresses or keys leave existing application settings untouched, and installing the dependency later re-runs startup reconciliation. Dependency declarations warn about availability rather than gating the listener themselves. While qBittorrent is connected, a reactive critical task requires its **Set Download Location** action to use Shelfarr’s exact download folder as qBittorrent’s default location. This also makes that entire file-manager volume available in both containers. The change affects qBittorrent’s default for other downloads too; category-specific save paths must remain inside the configured download folder. Changing storage refreshes the task. Disconnecting hides it.
 
 ## Network Access and Interfaces
 
@@ -80,10 +83,11 @@ The actions change the stored desired state. While running, changed state restar
 - **Media Storage** changes mounts and output directories without moving or deleting existing books. Repeating the same selection is safe. Removing or changing a directory can leave existing library records pointing to unavailable files; files must be moved separately when desired.
 - **Connect/Disconnect Prowlarr** changes the direct-search integration. Each invocation toggles the selection, so a second invocation reverses the first. There is no Prowlarr application-sync registration.
 - **Connect/Disconnect qBittorrent** manages only the reserved client record. Each invocation toggles the selection; reconciliation reuses its unique name rather than creating duplicates.
+- **Configure Audiobookshelf** enables or disables the local connection and edits its library IDs; the API credential comes from Audiobookshelf automatically. Repeating the same configuration is safe. Enable the same file-manager folders in Audiobookshelf’s **External Libraries**, then create libraries pointing at Shelfarr’s output paths. Changed connection settings enqueue an immediate inventory sync; unchanged restarts do not enqueue duplicates. Shelfarr uses upstream library matching, inventory sync, and post-import scans; this action does not create libraries or change Audiobookshelf mounts.
 
 ## Tasks
 
-Two reactive critical prompts block startup while setup is incomplete. The password prompt is raised while `adminPassword` is null and clears when generated. The storage prompt is raised while `mediaSources` is empty and clears when storage is selected. Either can return if its stored value is cleared.
+Two reactive critical prompts block startup while setup is incomplete. The password prompt is raised while `adminPassword` is null and clears when generated. The storage prompt is raised while `mediaSources` is empty and clears when storage is selected. Either can return if its stored value is cleared. The connected dependencies also carry the critical qBittorrent download-location and Audiobookshelf service-integration tasks described above.
 
 ## Health Checks
 
@@ -103,7 +107,7 @@ The package deliberately manages access, storage and local connection details.
 
 1. No local media library or access to qBittorrent-private downloads is provided. Output directories must be beneath selected shared storage; removing selected storage prevents startup until repaired.
 2. Output folders, the reserved admin login, password authentication and selected integration details are reapplied at startup. Conflicting application edits do not survive restart.
-3. The beta Libation/Audible companion is not bundled. Audiobookshelf and other library-platform connections are configured manually and need compatible shared paths.
+3. The beta Libation/Audible companion is not bundled. Audiobookshelf requires its Service Integrations opt-in, library IDs and matching shared folders; credentials are provided automatically. Other library platforms remain manually configured.
 4. Provider availability remains external. No downloader, metadata server or challenge-solving browser is bundled.
 5. No riscv64 image is available. Recover from an older backup rather than attempting a database downgrade.
 
@@ -132,14 +136,16 @@ startos_managed_env_vars:
     STARTOS_BOOTSTRAP,
     STARTOS_CONFIG,
   ]
-dependencies: [filebrowser, nextexplorer, qbittorrent, prowlarr]
+dependencies: [filebrowser, nextexplorer, qbittorrent, prowlarr, audiobookshelf]
 interfaces:
   ui: { host_id: ui-multi, type: ui, port: 5056, protocol: http }
 actions:
-  [set-admin-password, media-storage, connect-prowlarr, connect-qbittorrent]
+  [set-admin-password, media-storage, connect-prowlarr, connect-qbittorrent, connect-audiobookshelf]
 tasks:
   - { action: set-admin-password, severity: critical }
   - { action: media-storage, severity: critical }
+  - { package: qbittorrent, action: set-download-location, severity: critical, when: connected }
+  - { package: audiobookshelf, action: service-integrations, severity: critical, when: connected }
 health_checks: [primary]
 oneshots: [trust-ca, prepare-media, bootstrap]
 ```

@@ -11,7 +11,7 @@ export const connectQbittorrent = sdk.Action.withoutInput(
     description: i18n(
       'Toggle the managed qBittorrent download client. Downloads must use selected shared storage. Changing the connection restarts Shelfarr.',
     ),
-    warning: null,
+    warning: i18n('Changing this connection restarts Shelfarr.'),
     allowedStatuses: 'any',
     group: null,
     visibility: 'enabled',
