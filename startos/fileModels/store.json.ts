@@ -12,7 +12,6 @@ const shape = z.looseObject({
     .union([
       z.literal(false),
       z.looseObject({
-        apiKey: z.string(),
         audiobookLibraryId: z.string().nullable(),
         ebookLibraryId: z.string().nullable(),
         comicbookLibraryId: z.string().nullable().catch(null),

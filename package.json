@@ -2,7 +2,7 @@
   "name": "shelfarr-startos",
   "dependencies": {
     "@start9labs/start-sdk": "4.1.0",
-    "audiobookshelf-startos": "github:Start9Labs/audiobookshelf-startos#next",
+    "audiobookshelf-startos": "github:Start9Labs/audiobookshelf-startos#feat/automatic-integration-credentials",
     "filebrowser-quantum-startos": "github:Start9Labs/filebrowser-quantum-startos#next",
     "nextexplorer-startos": "github:Start9Labs/nextexplorer-startos#next",
     "qbittorrent-startos": "github:Start9Labs/qbittorrent-startos#next",

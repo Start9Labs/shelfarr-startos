@@ -4,7 +4,11 @@ import { manifest as filebrowserManifest } from 'filebrowser-quantum-startos/sta
 import { manifest as nextexplorerManifest } from 'nextexplorer-startos/startos/manifest'
 import { manifest as qbittorrentManifest } from 'qbittorrent-startos/startos/manifest'
 import { manifest as prowlarrManifest } from 'prowlarr-startos/startos/manifest'
-import { uiPort as audiobookshelfPort } from 'audiobookshelf-startos/startos/utils'
+import { manifest as audiobookshelfManifest } from 'audiobookshelf-startos/startos/manifest'
+import {
+  publicApiKeyFile as audiobookshelfKeyFile,
+  uiPort as audiobookshelfPort,
+} from 'audiobookshelf-startos/startos/utils'
 import {
   uiHostId as qbittorrentHostId,
   uiPort as qbittorrentPort,
@@ -111,6 +115,14 @@ export const main = sdk.setupMain(async ({ effects }) => {
       mountpoint: mediaMountpoints.nextexplorer,
       readonly: false,
     })
+  if (audiobookshelfAddress)
+    mounts = mounts.mountDependency<typeof audiobookshelfManifest>({
+      dependencyId: 'audiobookshelf',
+      volumeId: 'public',
+      subpath: null,
+      mountpoint: '/mnt/audiobookshelf',
+      readonly: true,
+    })
   if (qbittorrentAddress)
     mounts = mounts.mountDependency<typeof qbittorrentManifest>({
       dependencyId: 'qbittorrent',
@@ -140,6 +152,9 @@ export const main = sdk.setupMain(async ({ effects }) => {
         .read()
         .const(effects)
     )?.trim() || null
+  const audiobookshelfKey = audiobookshelfAddress
+    ? await readKey(`/mnt/audiobookshelf/${audiobookshelfKeyFile}`)
+    : null
   const qbittorrentKey = qbittorrentAddress
     ? await readKey('/mnt/qbittorrent/api-key')
     : null
@@ -192,12 +207,16 @@ export const main = sdk.setupMain(async ({ effects }) => {
           STARTOS_CONFIG: JSON.stringify({
             ...store,
             downloadPath,
+            // A withdrawn export clears Shelfarr's cached credential.
             audiobookshelf:
               store.audiobookshelf && audiobookshelfAddress
-                ? {
-                    ...store.audiobookshelf,
-                    url: `http://${audiobookshelfAddress}`,
-                  }
+                ? audiobookshelfKey
+                  ? {
+                      ...store.audiobookshelf,
+                      url: `http://${audiobookshelfAddress}`,
+                      apiKey: audiobookshelfKey,
+                    }
+                  : false
                 : store.audiobookshelf === false
                   ? false
                   : null,

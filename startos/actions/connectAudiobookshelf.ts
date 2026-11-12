@@ -9,7 +9,7 @@ export const connectAudiobookshelf = sdk.Action.withInput(
   {
     name: i18n('Configure Audiobookshelf'),
     description: i18n(
-      'Connect Audiobookshelf on this server using an API token and library IDs. Its external libraries must include the shared output folders. Changes restart Shelfarr.',
+      'Connect Audiobookshelf on this server using automatically managed credentials and library IDs. Enable Service Integrations there when prompted. Its external libraries must include the shared output folders. Changes restart Shelfarr.',
     ),
     warning: null,
     allowedStatuses: 'any',
@@ -25,15 +25,6 @@ export const connectAudiobookshelf = sdk.Action.withInput(
         enabled: {
           name: i18n('Enabled'),
           spec: InputSpec.of({
-            apiKey: Value.text({
-              name: i18n('API Token'),
-              description: i18n(
-                'Create an API key in Audiobookshelf under Settings > API Keys.',
-              ),
-              required: true,
-              masked: true,
-              default: null,
-            }),
             audiobookLibraryId: Value.text({
               name: i18n('Audiobook Library ID'),
               description: i18n(
@@ -67,7 +58,14 @@ export const connectAudiobookshelf = sdk.Action.withInput(
     const connection = await storeJson.read((s) => s.audiobookshelf).once()
     return {
       connection: connection
-        ? { selection: 'enabled' as const, value: connection }
+        ? {
+            selection: 'enabled' as const,
+            value: {
+              audiobookLibraryId: connection.audiobookLibraryId,
+              ebookLibraryId: connection.ebookLibraryId,
+              comicbookLibraryId: connection.comicbookLibraryId,
+            },
+          }
         : { selection: 'disabled' as const, value: {} },
     }
   },
@@ -76,20 +74,15 @@ export const connectAudiobookshelf = sdk.Action.withInput(
       await storeJson.merge(effects, { audiobookshelf: false })
       return
     }
-    const apiKey = connection.value.apiKey.trim()
     const audiobookLibraryId =
       connection.value.audiobookLibraryId?.trim() || null
     const ebookLibraryId = connection.value.ebookLibraryId?.trim() || null
     const comicbookLibraryId =
       connection.value.comicbookLibraryId?.trim() || null
-    if (
-      !apiKey ||
-      !(audiobookLibraryId || ebookLibraryId || comicbookLibraryId)
-    )
-      throw new Error(i18n('Provide an API token and at least one library ID.'))
+    if (!(audiobookLibraryId || ebookLibraryId || comicbookLibraryId))
+      throw new Error(i18n('Provide at least one library ID.'))
     await storeJson.merge(effects, {
       audiobookshelf: {
-        apiKey,
         audiobookLibraryId,
         ebookLibraryId,
         comicbookLibraryId,

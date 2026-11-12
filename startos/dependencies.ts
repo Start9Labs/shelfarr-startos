@@ -1,4 +1,5 @@
 import { posix } from 'node:path'
+import { serviceIntegrations } from 'audiobookshelf-startos/startos/actions/serviceIntegrations'
 import { setDownloadLocation } from 'qbittorrent-startos/startos/actions/setDownloadLocation'
 import { getDownloadPath, mediaMountpoints } from './utils'
 import { i18n } from './i18n'
@@ -22,11 +23,29 @@ export const dependencies = sdk.Dependencies.of()
         title: 'Audiobookshelf',
         icon: 'https://raw.githubusercontent.com/Start9Labs/audiobookshelf-startos/8edf4693584e513a1054966afebf594aaa2d3939/icon.svg',
       },
-      versionRange: '>=2.37.2:3',
+      versionRange: '>=2.37.2:4',
       kind: 'running',
-      healthChecks: ['primary'],
+      healthChecks: ['primary', 'integrations'],
       enabled: async ({ effects }) =>
         !!(await storeJson.read((s) => s.audiobookshelf).const(effects)),
+    }).withInit(async (effects) => {
+      await sdk.action.createTask(
+        effects,
+        'audiobookshelf',
+        serviceIntegrations,
+        'critical',
+        {
+          input: {
+            kind: 'partial',
+            accept: [{ integrationsEnabled: true }],
+            set: { integrationsEnabled: true },
+          },
+          when: { condition: 'input-not-matches', once: false },
+          reason: i18n(
+            'Enable Audiobookshelf Service Integrations to provide its API credential automatically. Library scans require administrator API access.',
+          ),
+        },
+      )
     }),
   )
   .addDependency(
