@@ -7,6 +7,19 @@ const shape = z.looseObject({
   audiobookPath: z.string().catch('/mnt/filebrowser/Shelfarr/audiobooks'),
   ebookPath: z.string().catch('/mnt/filebrowser/Shelfarr/ebooks'),
   comicbookPath: z.string().catch('/mnt/filebrowser/Shelfarr/comics'),
+  downloadPath: z.string().nullable().catch(null),
+  audiobookshelf: z
+    .union([
+      z.literal(false),
+      z.looseObject({
+        apiKey: z.string(),
+        audiobookLibraryId: z.string().nullable(),
+        ebookLibraryId: z.string().nullable(),
+        comicbookLibraryId: z.string().nullable().catch(null),
+      }),
+    ])
+    .nullable()
+    .catch(null),
   qbittorrentConnected: z.boolean().catch(false),
   prowlarrConnected: z.boolean().nullable().catch(null),
 })

@@ -32,6 +32,23 @@ const dict = {
   'Sign in after Shelfarr finishes starting. Keep any configured two-factor authenticator.': 28,
   Username: 29,
   Password: 30,
+  'Configure Audiobookshelf': 31,
+  'Connect Audiobookshelf on this server using an API token and library IDs. Its external libraries must include the shared output folders. Changes restart Shelfarr.': 32,
+  'Audiobookshelf Connection': 33,
+  Disabled: 34,
+  Enabled: 35,
+  'API Token': 36,
+  'Create an API key in Audiobookshelf under Settings > API Keys.': 37,
+  'Audiobook Library ID': 38,
+  'Ebook Library ID': 39,
+  'Copy the library ID from its Audiobookshelf URL. Leave empty to skip this format.': 40,
+  'Provide an API token and at least one library ID.': 41,
+  'Download Folder': 42,
+  'Shared import folder for the managed qBittorrent client. A setup task requires this as qBittorrent’s default download location, including for other clients using its default.': 43,
+  'Set qBittorrent’s default download location to Shelfarr’s download folder. This also affects other clients using qBittorrent’s default.': 44,
+  'Changing this connection restarts Shelfarr.': 47,
+  'Comic Library ID': 45,
+  'Copy the library ID from its Audiobookshelf URL. Leave empty to use the ebook library for comics.': 46,
 } as const
 
 export type I18nKey = keyof typeof dict

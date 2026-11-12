@@ -11,7 +11,7 @@ export const connectProwlarr = sdk.Action.withoutInput(
     description: i18n(
       'Toggle automatic connection to Prowlarr on this server. Shelfarr searches Prowlarr directly. Changing the connection restarts Shelfarr.',
     ),
-    warning: null,
+    warning: i18n('Changing this connection restarts Shelfarr.'),
     allowedStatuses: 'any',
     group: null,
     visibility: 'enabled',
