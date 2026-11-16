@@ -13,7 +13,7 @@ export const manifest = setupManifest({
   volumes: ['main', 'startos'],
   images: {
     shelfarr: {
-      source: { dockerTag: 'ghcr.io/pedro-revez-silva/shelfarr:2026.11.09.1' },
+      source: { dockerTag: 'ghcr.io/pedro-revez-silva/shelfarr:2026.11.16.1' },
       arch: ['x86_64', 'aarch64'],
     },
   },
