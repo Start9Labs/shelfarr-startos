@@ -4,7 +4,7 @@ import { Store } from './fileModels/store.json'
 export const uiPort = 5056
 export const uiHostId = 'ui-multi'
 export const adminUsername = 'admin'
-// Shared media paths match qBittorrent and the file managers.
+// Shared media paths must match qBittorrent, NZBGet and the file managers.
 export const mediaMountpoints = {
   filebrowser: '/mnt/filebrowser',
   nextexplorer: '/mnt/nextexplorer',
@@ -100,14 +100,34 @@ elsif c["audiobookshelf"]
   settings.each { |key, value| SettingsService.set(key, value) }
   AudiobookshelfLibrarySyncJob.perform_later if changed
 end
-name = "qBittorrent (StartOS)"
-client = DownloadClient.find_by(name: name)
-if !c.fetch("qbittorrentConnected")
-  client&.destroy!
-elsif c["qbittorrent"]
-  client ||= DownloadClient.new(name: name, priority: 0, category: "shelfarr")
-  # Managed torrents use shared storage at identical paths in both containers.
-  client.assign_attributes(client_type: "qbittorrent", url: c["qbittorrent"].fetch("url"), api_key: c["qbittorrent"].fetch("apiKey"), enabled: true, username: nil, password: nil, download_path: c.fetch("downloadPath"))
-  client.save!
+[
+  ["qBittorrent (StartOS)", c.fetch("qbittorrentConnected"), c["qbittorrent"] && {
+    client_type: "qbittorrent",
+    url: c["qbittorrent"].fetch("url"),
+    api_key: c["qbittorrent"].fetch("apiKey"),
+    username: nil,
+    password: nil,
+    # Managed torrents use shared storage at identical paths in both containers.
+    download_path: c.fetch("downloadPath")
+  }],
+  ["NZBGet (StartOS)", c.fetch("nzbgetConnected"), c["nzbget"] && {
+    client_type: "nzbget",
+    url: c["nzbget"].fetch("url"),
+    username: c["nzbget"].fetch("username"),
+    password: c["nzbget"].fetch("password"),
+    api_key: nil,
+    # The import root must follow NZBGet's published completed-download folder.
+    download_path: c["nzbget"].fetch("downloadPath")
+  }]
+].each do |name, connected, attributes|
+  client = DownloadClient.find_by(name: name)
+  if !connected
+    client&.destroy!
+  elsif attributes
+    # Must name a category seeded by NZBGet.
+    client ||= DownloadClient.new(name: name, priority: 0, category: "shelfarr")
+    client.assign_attributes(attributes.merge(enabled: true))
+    client.save!
+  end
 end
 `

@@ -3,6 +3,7 @@ import { setAdminPassword } from './setAdminPassword'
 import { mediaStorage } from './mediaStorage'
 import { connectProwlarr } from './connectProwlarr'
 import { connectQbittorrent } from './connectQbittorrent'
+import { connectNzbget } from './connectNzbget'
 import { connectAudiobookshelf } from './connectAudiobookshelf'
 
 export const actions = sdk.Actions.of()
@@ -10,4 +11,5 @@ export const actions = sdk.Actions.of()
   .addAction(mediaStorage)
   .addAction(connectProwlarr)
   .addAction(connectQbittorrent)
+  .addAction(connectNzbget)
   .addAction(connectAudiobookshelf)

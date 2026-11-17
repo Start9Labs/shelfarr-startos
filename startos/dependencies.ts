@@ -118,6 +118,21 @@ export const dependencies = sdk.Dependencies.of()
     }),
   )
   .addDependency(
+    sdk.Dependency.optional('nzbget', {
+      description: dependencyDescriptions.nzbget,
+      metadata: {
+        title: 'NZBGet',
+        icon: 'https://raw.githubusercontent.com/Start9Labs/nzbget-startos/3f124f736163d0fa2e4667d7ef31b37983abb2ca/icon.svg',
+      },
+      versionRange: '>=26.3:0',
+      kind: 'running',
+      healthChecks: ['primary'],
+      enabled: async ({ effects }) =>
+        (await storeJson.read((s) => s.nzbgetConnected).const(effects)) ??
+        false,
+    }),
+  )
+  .addDependency(
     sdk.Dependency.optional('prowlarr', {
       description: dependencyDescriptions.prowlarr,
       metadata: {

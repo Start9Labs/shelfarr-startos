@@ -48,6 +48,10 @@ const dict = {
   'Enable Audiobookshelf Service Integrations to provide its API credential automatically. Library scans require administrator API access.': 48,
   'Comic Library ID': 45,
   'Copy the library ID from its Audiobookshelf URL. Leave empty to use the ebook library for comics.': 46,
+  'Disconnect NZBGet': 49,
+  'Connect NZBGet': 50,
+  'Toggle the managed NZBGet client. Select its file manager in Media Storage. The completed-download folder and restricted login are provided automatically. Changing the connection restarts Shelfarr.': 51,
+  'NZBGet’s download folder must be inside selected storage. Change Media Storage or disconnect NZBGet.': 52,
 } as const
 
 export type I18nKey = keyof typeof dict

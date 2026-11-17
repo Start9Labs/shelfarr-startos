@@ -20,6 +20,7 @@ const shape = z.looseObject({
     .nullable()
     .catch(null),
   qbittorrentConnected: z.boolean().catch(false),
+  nzbgetConnected: z.boolean().catch(false),
   prowlarrConnected: z.boolean().nullable().catch(null),
 })
 

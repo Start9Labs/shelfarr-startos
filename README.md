@@ -44,10 +44,11 @@ Application state and package state use separate volumes. Output libraries and c
 | FileBrowser Quantum `data` | `/mnt/filebrowser`, read-write  | Shared libraries and downloads                                                          |
 | NextExplorer `data`        | `/mnt/nextexplorer`, read-write | Shared libraries and downloads, one directory per location                              |
 | qBittorrent `public`       | `/mnt/qbittorrent`, read-only   | Shared API key, while connected and installed                                           |
+| NZBGet `public`            | `/mnt/nzbget`, read-only        | Restricted credentials and completed-download root, while connected and installed      |
 | Prowlarr `public`          | `/mnt/prowlarr`, read-only      | Shared API key, while connected and installed                                           |
 | Audiobookshelf `public`    | `/mnt/audiobookshelf`, read-only | Automatically provisioned API key while connected and installed                        |
 
-The own storage mount masks any files baked into the image's storage directory; fresh installations generate their own keys. Media mount paths match qBittorrent. A download and output path on one mounted filesystem can support hardlinks; different file managers cannot share them.
+The own storage mount masks any files baked into the image's storage directory; fresh installations generate their own keys. Media mount paths must match qBittorrent and NZBGet. A download and output path on one mounted filesystem can support hardlinks; different file managers cannot share them.
 
 ## File Models
 
@@ -57,13 +58,15 @@ Every start reconciles the `admin` password and role, password authentication, a
 
 Prowlarr selection begins unset, leaving manual indexer settings alone. Connecting manages its URL, key and provider; disconnecting clears its URL/key and changes the provider to `none` if Prowlarr was active. While disconnected, these fields remain cleared on startup. The managed qBittorrent record has the reserved name `qBittorrent (StartOS)`; client type, connection fields, download folder and enabled state are package-owned, while category and routing choices remain user-controlled. `Media Storage` sets the managed client’s completed-download import root; when unset, it defaults to a `downloads` sibling of the audiobook output folder. This field does not override qBittorrent’s save path on torrent submission. Matching mount paths make remote-path translation unnecessary. Existing torrents are not relocated. Disconnecting deletes that record, not manually named clients.
 
+The independently managed `NZBGet (StartOS)` record uses client type `nzbget`, its bridge URL, restricted username/password and the completed-download root from NZBGet's `public/credentials.json`; its API-key field is cleared. These fields and enabled state are reapplied on startup. The credentials are not NZBGet's admin login and are never copied into `store.json`. The exported root, not Shelfarr's qBittorrent download-folder setting, owns this client's `download_path`. A new record gets priority zero and category `shelfarr`, which NZBGet seeds; later category, priority and routing choices remain user-owned. Both downloaders share one bootstrap reconciliation loop. Repeated starts reuse each reserved name; disconnect deletes only that record. Manually named clients with other names are untouched. Missing NZBGet addresses, credentials or an unselected download location leave its existing record unchanged.
+
 Audiobookshelf selection begins unset, preserving manual library-platform settings. **Configure Audiobookshelf** stores audiobook, ebook and comic library IDs, resolves the local bridge address, reads the automatically provisioned `public/api-key` reactively, and selects Audiobookshelf as the active library platform. No API-token input is accepted or stored in the package’s desired-state model. The credential is cached by the upstream application in SQLite as required by its integration. Empty format IDs clear the corresponding managed setting; comics fall back to the ebook library upstream. Additional scan-library IDs remain user-controlled, but are cleared when switching from another platform to avoid reusing that platform’s IDs. Disabling clears the managed URL and token on every start, preventing reconnects without overwriting another platform’s credentials. An unavailable bridge leaves existing application settings untouched. A missing or withdrawn export from an available Audiobookshelf clears Shelfarr’s managed URL/token, preventing reuse of a cached credential; a new export restarts reconciliation automatically. No private Audiobookshelf volume is mounted or modified.
 
 ## Dependencies
 
 All dependencies are optional selections. At least one file manager must be selected; selected storage must be installed before startup, preventing output files from falling onto an unmounted container path.
 
-FileBrowser Quantum and NextExplorer are `exists` dependencies with read-write data mounts. Their daemons need not have been started or remain running: missing output folders are prepared independently, without recursively changing shared data ownership. Audiobookshelf, Prowlarr and qBittorrent are `running` dependencies with `primary` health expectations and read-only key mounts. Their bridge addresses and shared keys are watched reactively.
+FileBrowser Quantum and NextExplorer are `exists` dependencies with read-write data mounts. Their daemons need not have been started or remain running: missing output folders are prepared independently, without recursively changing shared data ownership. Audiobookshelf, Prowlarr, qBittorrent and NZBGet are `running` dependencies with `primary` health expectations and read-only credential mounts. Their bridge addresses and consumed credentials are watched reactively. NZBGet additionally publishes its completed-download root, which is watched and reapplied when changed. All three exported fields are consumed; unrelated export fields do not restart Shelfarr. NZBGet's file manager must be included in Media Storage. An available root outside selected storage blocks startup until that selection is corrected or NZBGet is disconnected; the package never fabricates an import path.
 
 Audiobookshelf requires its automatic credential-export package and also expects the `integrations` health check. While connected, a critical task requests **Service Integrations** with `integrationsEnabled: true`. It is opt-in because upstream library scans require administrator API access; the exported account is a dedicated non-root admin, not a scan-only security boundary. Disabling the Shelfarr connection hides this task but does not revoke credentials used by other services; use Audiobookshelf’s action to revoke the shared credential globally. While connected, disabling Service Integrations re-arms the task and keeps Shelfarr stopped until integrations are re-enabled or the connection is disabled; **Configure Audiobookshelf** runs while Shelfarr is stopped. Missing downloader/indexer addresses or keys leave existing application settings untouched, and installing the dependency later re-runs startup reconciliation. Dependency declarations warn about availability rather than gating the listener themselves.
 
@@ -87,6 +90,7 @@ The actions change the stored desired state. While running, changed state restar
 - **Media Storage** changes mounts and output directories without moving or deleting existing books. Repeating the same selection is safe. Removing or changing a directory can leave existing library records pointing to unavailable files; files must be moved separately when desired.
 - **Connect/Disconnect Prowlarr** changes the direct-search integration. Each invocation toggles the selection, so a second invocation reverses the first. There is no Prowlarr application-sync registration.
 - **Connect/Disconnect qBittorrent** manages only the reserved client record. Each invocation toggles the selection; reconciliation reuses its unique name rather than creating duplicates.
+- **Connect/Disconnect NZBGet** manages Usenet downloads independently of qBittorrent, after configuring NZBGet's news server and download location. It toggles `nzbgetConnected`; each invocation reverses selection and costs a restart when running. Reconciliation reuses the reserved client rather than duplicating it. Disconnect deletes the managed record, not downloaded files or clients with other names. No credential or separate import-root input is required; NZBGet supplies both automatically. Resetting its admin password requires no reconnection.
 - **Configure Audiobookshelf** enables or disables the local connection and edits its library IDs; the API credential comes from Audiobookshelf automatically. Repeating the same configuration is safe. Enable the same file-manager folders in Audiobookshelf’s **External Libraries**, then create libraries pointing at Shelfarr’s output paths. Changed connection settings enqueue an immediate inventory sync; unchanged restarts do not enqueue duplicates. Shelfarr uses upstream library matching, inventory sync, and post-import scans; this action does not create libraries or change Audiobookshelf mounts.
 
 ## Tasks
@@ -103,7 +107,7 @@ A failed bootstrap prevents the listener starting. Check logs for schema prepara
 
 StartOS stops Shelfarr and copies `main` and `startos`; quiescent SQLite databases and the generated encryption keys are captured together. `/tmp` within the own volume is excluded as temporary and derived data. In-flight temporary work may need retrying after restore.
 
-Mounted dependency volumes are not captured. File managers and download clients must be backed up separately; a restored database alone does not restore its library files. On restart, current dependency addresses and keys replace stored connection details.
+Mounted dependency volumes are not captured. File managers and download clients must be backed up separately; a restored database alone does not restore its library files. On restart, current dependency addresses and credentials replace stored connection details, including NZBGet's published import root.
 
 ## Limitations and Differences
 
@@ -114,6 +118,7 @@ The package deliberately manages access, storage and local connection details.
 3. The beta Libation/Audible companion is not bundled. Audiobookshelf requires its Service Integrations opt-in, library IDs and matching shared folders; credentials are provided automatically. Other library platforms remain manually configured.
 4. Provider availability remains external. No downloader, metadata server or challenge-solving browser is bundled.
 5. No riscv64 image is available. Recover from an older backup rather than attempting a database downgrade.
+6. The `NZBGet (StartOS)` client's type, URL, restricted login, cleared API key, import root and enabled state are package-managed. Changing its download root in Shelfarr does not persist; change NZBGet's location and include that file manager in Media Storage. Other client settings remain user-owned.
 
 ## Quick Reference for AI Consumers
 
@@ -140,11 +145,11 @@ startos_managed_env_vars:
     STARTOS_BOOTSTRAP,
     STARTOS_CONFIG,
   ]
-dependencies: [filebrowser, nextexplorer, qbittorrent, prowlarr, audiobookshelf]
+dependencies: [filebrowser, nextexplorer, qbittorrent, nzbget, prowlarr, audiobookshelf]
 interfaces:
   ui: { host_id: ui-multi, type: ui, port: 5056, protocol: http }
 actions:
-  [set-admin-password, media-storage, connect-prowlarr, connect-qbittorrent, connect-audiobookshelf]
+  [set-admin-password, media-storage, connect-prowlarr, connect-qbittorrent, connect-nzbget, connect-audiobookshelf]
 tasks:
   - { action: set-admin-password, severity: critical }
   - { action: media-storage, severity: critical }

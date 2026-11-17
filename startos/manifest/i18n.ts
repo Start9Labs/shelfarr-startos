@@ -8,15 +8,15 @@ export const short = {
 
 export const long = {
   en_US:
-    'Shelfarr manages book requests, searches indexers and direct sources, and organizes completed downloads. This package adds managed admin credentials, shared storage in FileBrowser Quantum or NextExplorer, and optional connections to Prowlarr, qBittorrent and Audiobookshelf. Book discovery uses external metadata providers.',
+    'Shelfarr manages book requests, searches indexers and direct sources, and organizes completed downloads. This package adds managed admin credentials, shared storage in FileBrowser Quantum or NextExplorer, and optional connections to Prowlarr, qBittorrent, NZBGet and Audiobookshelf. Book discovery uses external metadata providers.',
   es_ES:
-    'Shelfarr gestiona solicitudes de libros, busca en indexadores y fuentes directas y organiza las descargas. Este paquete añade credenciales de administrador gestionadas, almacenamiento compartido en FileBrowser Quantum o NextExplorer y conexiones opcionales a Prowlarr, qBittorrent y Audiobookshelf. La búsqueda de libros usa proveedores externos de metadatos.',
+    'Shelfarr gestiona solicitudes de libros, busca en indexadores y fuentes directas y organiza las descargas. Este paquete añade credenciales de administrador gestionadas, almacenamiento compartido en FileBrowser Quantum o NextExplorer y conexiones opcionales a Prowlarr, qBittorrent, NZBGet y Audiobookshelf. La búsqueda de libros usa proveedores externos de metadatos.',
   de_DE:
-    'Shelfarr verwaltet Buchanfragen, durchsucht Indexer und direkte Quellen und ordnet fertige Downloads. Das Paket bietet verwaltete Administrator-Zugangsdaten, gemeinsamen Speicher in FileBrowser Quantum oder NextExplorer und optionale Verbindungen zu Prowlarr, qBittorrent und Audiobookshelf. Die Buchsuche nutzt externe Metadatenanbieter.',
+    'Shelfarr verwaltet Buchanfragen, durchsucht Indexer und direkte Quellen und ordnet fertige Downloads. Das Paket bietet verwaltete Administrator-Zugangsdaten, gemeinsamen Speicher in FileBrowser Quantum oder NextExplorer und optionale Verbindungen zu Prowlarr, qBittorrent, NZBGet und Audiobookshelf. Die Buchsuche nutzt externe Metadatenanbieter.',
   pl_PL:
-    'Shelfarr zarządza zamówieniami książek, przeszukuje indeksatory i źródła bezpośrednie oraz porządkuje pobrane pliki. Pakiet dodaje zarządzane dane administratora, współdzielony magazyn w FileBrowser Quantum lub NextExplorer i opcjonalne połączenia z Prowlarr, qBittorrent i Audiobookshelf. Wyszukiwanie książek korzysta z zewnętrznych dostawców metadanych.',
+    'Shelfarr zarządza zamówieniami książek, przeszukuje indeksatory i źródła bezpośrednie oraz porządkuje pobrane pliki. Pakiet dodaje zarządzane dane administratora, współdzielony magazyn w FileBrowser Quantum lub NextExplorer i opcjonalne połączenia z Prowlarr, qBittorrent, NZBGet i Audiobookshelf. Wyszukiwanie książek korzysta z zewnętrznych dostawców metadanych.',
   fr_FR:
-    'Shelfarr gère les demandes de livres, recherche dans les indexeurs et sources directes et organise les téléchargements terminés. Ce paquet ajoute des identifiants administrateur gérés, un stockage partagé dans FileBrowser Quantum ou NextExplorer et des connexions facultatives à Prowlarr, qBittorrent et Audiobookshelf. La découverte utilise des fournisseurs externes de métadonnées.',
+    'Shelfarr gère les demandes de livres, recherche dans les indexeurs et sources directes et organise les téléchargements terminés. Ce paquet ajoute des identifiants administrateur gérés, un stockage partagé dans FileBrowser Quantum ou NextExplorer et des connexions facultatives à Prowlarr, qBittorrent, NZBGet et Audiobookshelf. La découverte utilise des fournisseurs externes de métadonnées.',
 }
 
 const storageDescription = {
@@ -54,6 +54,18 @@ export const dependencyDescriptions = {
     pl_PL: 'Opcjonalne. Klient pobierania włączany przez Połącz qBittorrent.',
     fr_FR:
       'Facultatif. Client de téléchargement activé par Connecter qBittorrent.',
+  },
+  nzbget: {
+    en_US:
+      'Optional. Lets Shelfarr send Usenet downloads to NZBGet. Enabled with Connect NZBGet.',
+    es_ES:
+      'Opcional. Permite que Shelfarr envíe descargas de Usenet a NZBGet. Se activa con Conectar NZBGet.',
+    de_DE:
+      'Optional. Ermöglicht Shelfarr, Usenet-Downloads an NZBGet zu senden. Aktivierung über NZBGet verbinden.',
+    pl_PL:
+      'Opcjonalne. Pozwala Shelfarr wysyłać pobrania z Usenetu do NZBGet. Włączane w Połącz NZBGet.',
+    fr_FR:
+      'Facultatif. Permet à Shelfarr d’envoyer les téléchargements Usenet à NZBGet. À activer avec Connecter NZBGet.',
   },
   prowlarr: {
     en_US: 'Optional. Direct indexer searches enabled with Connect Prowlarr.',

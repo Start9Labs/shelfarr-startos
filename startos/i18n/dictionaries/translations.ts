@@ -49,6 +49,10 @@ export default {
     42: 'Carpeta de descargas',
     43: 'Carpeta de importación compartida para el cliente qBittorrent gestionado. Una tarea exige usarla como ubicación predeterminada de qBittorrent, también para otros clientes que usan su ubicación predeterminada.',
     44: 'Establece la carpeta de descargas de Shelfarr como ubicación predeterminada de qBittorrent. Esto también afecta a otros clientes que usan su ubicación predeterminada.',
+    49: 'Desconectar NZBGet',
+    50: 'Conectar NZBGet',
+    51: 'Activa o desactiva el cliente NZBGet gestionado. Selecciona su gestor de archivos en Almacenamiento multimedia. La carpeta de descargas completadas y las credenciales restringidas se proporcionan automáticamente. Cambiar la conexión reinicia Shelfarr.',
+    52: 'La carpeta de descargas de NZBGet debe estar dentro del almacenamiento seleccionado. Cambia Almacenamiento multimedia o desconecta NZBGet.',
   },
   de_DE: {
     0: 'Shelfarr wird gestartet!',
@@ -98,6 +102,10 @@ export default {
     42: 'Download-Ordner',
     43: 'Gemeinsamer Importordner für den verwalteten qBittorrent-Client. Eine Einrichtungsaufgabe verlangt diesen als qBittorrents Standardordner, auch für andere Clients mit Standardpfad.',
     44: 'Shelfarrs Download-Ordner als qBittorrents Standardordner festlegen. Dies betrifft auch andere Clients, die dessen Standard verwenden.',
+    49: 'NZBGet trennen',
+    50: 'NZBGet verbinden',
+    51: 'Den verwalteten NZBGet-Client umschalten. Dessen Dateimanager unter Medienspeicher auswählen. Der Ordner für abgeschlossene Downloads und eingeschränkte Zugangsdaten werden automatisch bereitgestellt. Eine Änderung startet Shelfarr neu.',
+    52: 'NZBGets Download-Ordner muss im ausgewählten Speicher liegen. Medienspeicher ändern oder NZBGet trennen.',
   },
   pl_PL: {
     0: 'Uruchamianie Shelfarr!',
@@ -147,6 +155,10 @@ export default {
     42: 'Folder pobierania',
     43: 'Wspólny folder importu zarządzanego klienta qBittorrent. Zadanie konfiguracji wymaga ustawienia go jako domyślnego folderu qBittorrent, także dla innych klientów używających ustawienia domyślnego.',
     44: 'Ustaw folder pobierania Shelfarr jako domyślną lokalizację qBittorrent. Dotyczy to też innych klientów używających ustawienia domyślnego.',
+    49: 'Odłącz NZBGet',
+    50: 'Połącz NZBGet',
+    51: 'Przełącz zarządzanego klienta NZBGet. Wybierz jego menedżera plików w Magazynie multimediów. Folder ukończonych pobrań i ograniczone dane logowania są dostarczane automatycznie. Zmiana połączenia uruchamia Shelfarr ponownie.',
+    52: 'Folder pobierania NZBGet musi znajdować się w wybranym magazynie. Zmień Magazyn multimediów lub odłącz NZBGet.',
   },
   fr_FR: {
     0: 'Démarrage de Shelfarr !',
@@ -196,5 +208,9 @@ export default {
     42: 'Dossier de téléchargement',
     43: 'Dossier d’import partagé du client qBittorrent géré. Une tâche exige de le définir comme emplacement par défaut de qBittorrent, y compris pour les autres clients utilisant sa valeur par défaut.',
     44: 'Définissez le dossier de téléchargement de Shelfarr comme emplacement par défaut de qBittorrent. Cela affecte aussi les autres clients utilisant sa valeur par défaut.',
+    49: 'Déconnecter NZBGet',
+    50: 'Connecter NZBGet',
+    51: 'Activez ou désactivez le client NZBGet géré. Sélectionnez son gestionnaire de fichiers dans Stockage multimédia. Le dossier des téléchargements terminés et les identifiants restreints sont fournis automatiquement. Modifier la connexion redémarre Shelfarr.',
+    52: 'Le dossier de téléchargement de NZBGet doit se trouver dans le stockage sélectionné. Modifiez Stockage multimédia ou déconnectez NZBGet.',
   },
 } satisfies Record<string, LangDict>
