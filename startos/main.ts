@@ -4,6 +4,11 @@ import { manifest as filebrowserManifest } from 'filebrowser-quantum-startos/sta
 import { manifest as nextexplorerManifest } from 'nextexplorer-startos/startos/manifest'
 import { manifest as qbittorrentManifest } from 'qbittorrent-startos/startos/manifest'
 import { manifest as prowlarrManifest } from 'prowlarr-startos/startos/manifest'
+import { manifest as audiobookshelfManifest } from 'audiobookshelf-startos/startos/manifest'
+import {
+  publicApiKeyFile as audiobookshelfKeyFile,
+  uiPort as audiobookshelfPort,
+} from 'audiobookshelf-startos/startos/utils'
 import {
   uiHostId as qbittorrentHostId,
   uiPort as qbittorrentPort,
@@ -17,6 +22,7 @@ import { i18n } from './i18n'
 import { sdk } from './sdk'
 import {
   bootstrapScript,
+  getDownloadPath,
   mediaMountpoints,
   prepareMediaScript,
   uiPort,
@@ -28,12 +34,14 @@ export const main = sdk.setupMain(async ({ effects }) => {
   const store = await storeJson.read().const(effects)
   if (!store?.adminPassword)
     throw new Error(i18n('Set the admin password before signing in'))
+  const downloadPath = getDownloadPath(store)
   const outputPaths = [
     store.audiobookPath,
     store.ebookPath,
     store.comicbookPath,
   ]
-  if (!validMediaPaths(store.mediaSources, outputPaths))
+  const mediaPaths = [...outputPaths, downloadPath]
+  if (!validMediaPaths(store.mediaSources, mediaPaths))
     throw new Error(
       i18n('Output folders must be inside selected storage, not its root.'),
     )
@@ -47,6 +55,16 @@ export const main = sdk.setupMain(async ({ effects }) => {
       )
   }
 
+  const audiobookshelfAddress = store.audiobookshelf
+    ? await sdk.host
+        .getBridgeAddress(effects, {
+          packageId: 'audiobookshelf',
+          hostId: 'ui-multi',
+          internalPort: audiobookshelfPort,
+          ssl: false,
+        })
+        .const()
+    : null
   const qbittorrentAddress = store.qbittorrentConnected
     ? await sdk.host
         .getBridgeAddress(effects, {
@@ -97,6 +115,14 @@ export const main = sdk.setupMain(async ({ effects }) => {
       mountpoint: mediaMountpoints.nextexplorer,
       readonly: false,
     })
+  if (audiobookshelfAddress)
+    mounts = mounts.mountDependency<typeof audiobookshelfManifest>({
+      dependencyId: 'audiobookshelf',
+      volumeId: 'public',
+      subpath: null,
+      mountpoint: '/mnt/audiobookshelf',
+      readonly: true,
+    })
   if (qbittorrentAddress)
     mounts = mounts.mountDependency<typeof qbittorrentManifest>({
       dependencyId: 'qbittorrent',
@@ -126,6 +152,9 @@ export const main = sdk.setupMain(async ({ effects }) => {
         .read()
         .const(effects)
     )?.trim() || null
+  const audiobookshelfKey = audiobookshelfAddress
+    ? await readKey(`/mnt/audiobookshelf/${audiobookshelfKeyFile}`)
+    : null
   const qbittorrentKey = qbittorrentAddress
     ? await readKey('/mnt/qbittorrent/api-key')
     : null
@@ -159,7 +188,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
           '-ec',
           prepareMediaScript,
           'prepare-media',
-          ...outputPaths,
+          ...mediaPaths,
         ],
       },
       requires: [],
@@ -177,6 +206,20 @@ export const main = sdk.setupMain(async ({ effects }) => {
           STARTOS_BOOTSTRAP: bootstrapScript,
           STARTOS_CONFIG: JSON.stringify({
             ...store,
+            downloadPath,
+            // A withdrawn export clears Shelfarr's cached credential.
+            audiobookshelf:
+              store.audiobookshelf && audiobookshelfAddress
+                ? audiobookshelfKey
+                  ? {
+                      ...store.audiobookshelf,
+                      url: `http://${audiobookshelfAddress}`,
+                      apiKey: audiobookshelfKey,
+                    }
+                  : false
+                : store.audiobookshelf === false
+                  ? false
+                  : null,
             qbittorrent:
               qbittorrentAddress && qbittorrentKey
                 ? {
