@@ -41,9 +41,6 @@ const dict = {
   'Ebook Library ID': 39,
   'Copy the library ID from its Audiobookshelf URL. Leave empty to skip this format.': 40,
   'Provide at least one library ID.': 41,
-  'Download Folder': 42,
-  'Shared import folder for the managed qBittorrent client. A setup task requires this as qBittorrent’s default download location, including for other clients using its default.': 43,
-  'Set qBittorrent’s default download location to Shelfarr’s download folder. This also affects other clients using qBittorrent’s default.': 44,
   'Changing this connection restarts Shelfarr.': 47,
   'Enable Audiobookshelf Service Integrations to provide its API credential automatically. Library scans require administrator API access.': 48,
   'Comic Library ID': 45,
@@ -52,6 +49,7 @@ const dict = {
   'Connect NZBGet': 50,
   'Toggle the managed NZBGet client. Select its file manager in Media Storage. The completed-download folder and restricted login are provided automatically. Changing the connection restarts Shelfarr.': 51,
   'NZBGet’s download folder must be inside selected storage. Change Media Storage or disconnect NZBGet.': 52,
+  'qBittorrent must download to shared storage selected in Media Storage. Select its file manager here or disconnect qBittorrent.': 53,
 } as const
 
 export type I18nKey = keyof typeof dict

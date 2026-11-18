@@ -7,7 +7,6 @@ const shape = z.looseObject({
   audiobookPath: z.string().catch('/mnt/filebrowser/Shelfarr/audiobooks'),
   ebookPath: z.string().catch('/mnt/filebrowser/Shelfarr/ebooks'),
   comicbookPath: z.string().catch('/mnt/filebrowser/Shelfarr/comics'),
-  downloadPath: z.string().nullable().catch(null),
   audiobookshelf: z
     .union([
       z.literal(false),

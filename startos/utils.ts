@@ -10,13 +10,6 @@ export const mediaMountpoints = {
   nextexplorer: '/mnt/nextexplorer',
 } as const
 
-export function getDownloadPath(store: Store) {
-  return (
-    store.downloadPath ||
-    posix.join(posix.dirname(store.audiobookPath), 'downloads')
-  )
-}
-
 export function validMediaPaths(
   sources: Store['mediaSources'],
   paths: string[],
@@ -107,8 +100,8 @@ end
     api_key: c["qbittorrent"].fetch("apiKey"),
     username: nil,
     password: nil,
-    # Managed torrents use shared storage at identical paths in both containers.
-    download_path: c.fetch("downloadPath")
+    # qBittorrent owns the download location; imports follow its shared export.
+    download_path: c["qbittorrent"].fetch("downloadPath")
   }],
   ["NZBGet (StartOS)", c.fetch("nzbgetConnected"), c["nzbget"] && {
     client_type: "nzbget",
