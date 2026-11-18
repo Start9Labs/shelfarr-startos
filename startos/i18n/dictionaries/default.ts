@@ -49,7 +49,7 @@ const dict = {
   'Connect NZBGet': 50,
   'Toggle the managed NZBGet client. Select its file manager in Media Storage. The completed-download folder and restricted login are provided automatically. Changing the connection restarts Shelfarr.': 51,
   'NZBGet’s download folder must be inside selected storage. Change Media Storage or disconnect NZBGet.': 52,
-  'qBittorrent must download to shared storage selected in Media Storage. Select its file manager here or disconnect qBittorrent.': 53,
+  'qBittorrent must download to shared storage selected in Media Storage. Choose FileBrowser Quantum or NextExplorer in qBittorrent’s Set Download Location and include it in Media Storage, or disconnect qBittorrent.': 53,
 } as const
 
 export type I18nKey = keyof typeof dict

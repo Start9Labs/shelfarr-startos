@@ -199,7 +199,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
   )
     throw new Error(
       i18n(
-        'qBittorrent must download to shared storage selected in Media Storage. Select its file manager here or disconnect qBittorrent.',
+        'qBittorrent must download to shared storage selected in Media Storage. Choose FileBrowser Quantum or NextExplorer in qBittorrent’s Set Download Location and include it in Media Storage, or disconnect qBittorrent.',
       ),
     )
   const prowlarrKey = prowlarrAddress
