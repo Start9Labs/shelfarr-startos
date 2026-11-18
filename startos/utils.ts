@@ -1,4 +1,8 @@
 import { posix } from 'node:path'
+import {
+  filebrowserMountpoint,
+  nextexplorerMountpoint,
+} from 'qbittorrent-startos/startos/utils'
 import { Store } from './fileModels/store.json'
 
 export const uiPort = 5056
@@ -6,16 +10,9 @@ export const uiHostId = 'ui-multi'
 export const adminUsername = 'admin'
 // Shared media paths must match qBittorrent, NZBGet and the file managers.
 export const mediaMountpoints = {
-  filebrowser: '/mnt/filebrowser',
-  nextexplorer: '/mnt/nextexplorer',
+  filebrowser: filebrowserMountpoint,
+  nextexplorer: nextexplorerMountpoint,
 } as const
-
-export function getDownloadPath(store: Store) {
-  return (
-    store.downloadPath ||
-    posix.join(posix.dirname(store.audiobookPath), 'downloads')
-  )
-}
 
 export function validMediaPaths(
   sources: Store['mediaSources'],
@@ -107,8 +104,8 @@ end
     api_key: c["qbittorrent"].fetch("apiKey"),
     username: nil,
     password: nil,
-    # Managed torrents use shared storage at identical paths in both containers.
-    download_path: c.fetch("downloadPath")
+    # qBittorrent owns the download location; imports follow its shared export.
+    download_path: c["qbittorrent"].fetch("downloadPath")
   }],
   ["NZBGet (StartOS)", c.fetch("nzbgetConnected"), c["nzbget"] && {
     client_type: "nzbget",

@@ -9,6 +9,10 @@ import {
 import { manifest as filebrowserManifest } from 'filebrowser-quantum-startos/startos/manifest'
 import { manifest as nextexplorerManifest } from 'nextexplorer-startos/startos/manifest'
 import { manifest as qbittorrentManifest } from 'qbittorrent-startos/startos/manifest'
+import {
+  downloadLocationFile,
+  downloadLocationShape,
+} from 'qbittorrent-startos/startos/fileModels/downloadLocation'
 import { manifest as prowlarrManifest } from 'prowlarr-startos/startos/manifest'
 import { manifest as audiobookshelfManifest } from 'audiobookshelf-startos/startos/manifest'
 import {
@@ -28,7 +32,6 @@ import { i18n } from './i18n'
 import { sdk } from './sdk'
 import {
   bootstrapScript,
-  getDownloadPath,
   mediaMountpoints,
   prepareMediaScript,
   uiPort,
@@ -40,14 +43,12 @@ export const main = sdk.setupMain(async ({ effects }) => {
   const store = await storeJson.read().const(effects)
   if (!store?.adminPassword)
     throw new Error(i18n('Set the admin password before signing in'))
-  const downloadPath = getDownloadPath(store)
   const outputPaths = [
     store.audiobookPath,
     store.ebookPath,
     store.comicbookPath,
   ]
-  const mediaPaths = [...outputPaths, downloadPath]
-  if (!validMediaPaths(store.mediaSources, mediaPaths))
+  if (!validMediaPaths(store.mediaSources, outputPaths))
     throw new Error(
       i18n('Output folders must be inside selected storage, not its root.'),
     )
@@ -182,6 +183,25 @@ export const main = sdk.setupMain(async ({ effects }) => {
   const qbittorrentKey = qbittorrentAddress
     ? await readKey('/mnt/qbittorrent/api-key')
     : null
+  const qbittorrentDownloadPath = qbittorrentAddress
+    ? await FileHelper.json(
+        await sub.subpath(`/mnt/qbittorrent/${downloadLocationFile}`),
+        downloadLocationShape,
+      )
+        .read(({ downloadPath }) => downloadPath)
+        .const(effects)
+    : null
+  if (
+    qbittorrentAddress &&
+    qbittorrentKey &&
+    (!qbittorrentDownloadPath ||
+      !validMediaPaths(store.mediaSources, [qbittorrentDownloadPath]))
+  )
+    throw new Error(
+      i18n(
+        'qBittorrent must download to shared storage selected in Media Storage. Choose FileBrowser Quantum or NextExplorer in qBittorrent’s Set Download Location and include it in Media Storage, or disconnect qBittorrent.',
+      ),
+    )
   const prowlarrKey = prowlarrAddress
     ? await readKey('/mnt/prowlarr/api-key')
     : null
@@ -233,7 +253,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
           '-ec',
           prepareMediaScript,
           'prepare-media',
-          ...mediaPaths,
+          ...outputPaths,
         ],
       },
       requires: [],
@@ -251,7 +271,6 @@ export const main = sdk.setupMain(async ({ effects }) => {
           STARTOS_BOOTSTRAP: bootstrapScript,
           STARTOS_CONFIG: JSON.stringify({
             ...store,
-            downloadPath,
             // A withdrawn export clears Shelfarr's cached credential.
             audiobookshelf:
               store.audiobookshelf && audiobookshelfAddress
@@ -266,10 +285,11 @@ export const main = sdk.setupMain(async ({ effects }) => {
                   ? false
                   : null,
             qbittorrent:
-              qbittorrentAddress && qbittorrentKey
+              qbittorrentAddress && qbittorrentKey && qbittorrentDownloadPath
                 ? {
                     url: `http://${qbittorrentAddress}`,
                     apiKey: qbittorrentKey,
+                    downloadPath: qbittorrentDownloadPath,
                   }
                 : null,
             nzbget:
