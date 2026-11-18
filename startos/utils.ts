@@ -1,4 +1,8 @@
 import { posix } from 'node:path'
+import {
+  filebrowserMountpoint,
+  nextexplorerMountpoint,
+} from 'qbittorrent-startos/startos/utils'
 import { Store } from './fileModels/store.json'
 
 export const uiPort = 5056
@@ -6,8 +10,8 @@ export const uiHostId = 'ui-multi'
 export const adminUsername = 'admin'
 // Shared media paths must match qBittorrent, NZBGet and the file managers.
 export const mediaMountpoints = {
-  filebrowser: '/mnt/filebrowser',
-  nextexplorer: '/mnt/nextexplorer',
+  filebrowser: filebrowserMountpoint,
+  nextexplorer: nextexplorerMountpoint,
 } as const
 
 export function validMediaPaths(
