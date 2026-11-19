@@ -24,7 +24,9 @@ export const dependencies = sdk.Dependencies.of()
       kind: 'running',
       healthChecks: ['primary', 'integrations'],
       enabled: async ({ effects }) =>
-        !!(await storeJson.read((s) => s.audiobookshelf).const(effects)),
+        !!(await storeJson
+          .read((s) => s.audiobookshelfConnected)
+          .const(effects)),
     }).withInit(async (effects) => {
       await sdk.action.createTask(
         effects,

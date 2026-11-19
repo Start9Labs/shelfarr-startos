@@ -62,7 +62,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
       )
   }
 
-  const audiobookshelfAddress = store.audiobookshelf
+  const audiobookshelfAddress = store.audiobookshelfConnected
     ? await sdk.host
         .getBridgeAddress(effects, {
           packageId: 'audiobookshelf',
@@ -272,18 +272,16 @@ export const main = sdk.setupMain(async ({ effects }) => {
           STARTOS_CONFIG: JSON.stringify({
             ...store,
             // A withdrawn export clears Shelfarr's cached credential.
-            audiobookshelf:
-              store.audiobookshelf && audiobookshelfAddress
-                ? audiobookshelfKey
-                  ? {
-                      ...store.audiobookshelf,
-                      url: `http://${audiobookshelfAddress}`,
-                      apiKey: audiobookshelfKey,
-                    }
-                  : false
-                : store.audiobookshelf === false
-                  ? false
-                  : null,
+            audiobookshelf: audiobookshelfAddress
+              ? audiobookshelfKey
+                ? {
+                    url: `http://${audiobookshelfAddress}`,
+                    apiKey: audiobookshelfKey,
+                  }
+                : false
+              : store.audiobookshelfConnected === false
+                ? false
+                : null,
             qbittorrent:
               qbittorrentAddress && qbittorrentKey && qbittorrentDownloadPath
                 ? {
