@@ -72,7 +72,7 @@ elsif c["prowlarr"]
   SettingsService.set(:prowlarr_api_key, c["prowlarr"].fetch("apiKey"))
   SettingsService.set(:indexer_provider, "prowlarr")
 end
-# Library IDs are scoped to the selected platform; never reuse another platform's IDs.
+# Library IDs are user-owned in Shelfarr and scoped to the selected platform; never reuse another platform's IDs.
 if c["audiobookshelf"] == false
   SettingsService.set(:audiobookshelf_url, "")
   SettingsService.set(:audiobookshelf_api_key, "")
@@ -83,13 +83,9 @@ elsif c["audiobookshelf"]
     audiobookshelf_url: abs.fetch("url"),
     audiobookshelf_api_key: abs.fetch("apiKey")
   }
-  {
-    audiobook: "audiobookLibraryId",
-    ebook: "ebookLibraryId",
-    comicbook: "comicbookLibraryId"
-  }.each do |format, key|
-    settings["audiobookshelf_#{format}_library_id".to_sym] = abs[key].to_s
-    if SettingsService.active_library_platform != "audiobookshelf"
+  if SettingsService.active_library_platform != "audiobookshelf"
+    %w[audiobook ebook comicbook].each do |format|
+      settings["audiobookshelf_#{format}_library_id".to_sym] = ""
       settings["audiobookshelf_#{format}_scan_library_ids".to_sym] = ""
     end
   end
